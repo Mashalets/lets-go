@@ -1,0 +1,352 @@
+:description: Лабораторная работа 5-6
+:toc: 
+:toclevels: 3
+:toc-title: Оглавление
+:sectnums: |,all|
+:figure-caption: Рисунок
+:imagesdir: PIC
+:table-caption: Таблица
+
+include::Tityale5_6.adoc[]
+
+== Добавление классов
+
+В C++ добавление классов является основой объектно-ориентированного программирования, которое помогает организовать код, улучшить его структуру и упростить дальнейшую поддержку. Класс в этом контексте представляет собой схему, описывающую данные (переменные-члены) и методы, которые выполняют действия с этими данными, и определяет поведение объектов, созданных на его основе.
+
+Обычно для реализации класса в C++ используют два файла: заголовочный (.h), в котором описан интерфейс класса, и файл реализации (.cpp), содержащий реализацию его методов. Это разделение делает код более удобным для управления, способствует повторному использованию и ускоряет компиляцию программы.
+
+В заголовочном файле указывается структура класса — перечень его переменных и прототипов методов, а также правила доступа (public, private, protected). Это дает возможность другим частям программы взаимодействовать с классом, при этом скрывая его внутреннюю реализацию.
+
+Файл реализации содержит конкретные определения методов, упомянутых в заголовочном файле, и описывает, как они выполняются. Это позволяет изменять функциональность класса, не затрагивая код, который использует этот класс. Заголовочный файл подключается к файлу реализации через директиву #include.
+
+=== Класс ModeManager
+
+Архитекутра класса ModeManager:
+
+[plantuml, format=png]
+----
+
+class ModeManager {
+    tMode& modes
+    std::uint8_t currentModeType
+    + ModeManager(tMode& modes)
+    + void InitModeManager()
+    + void UpdateModeManager()
+    + void SwitchModeManager()
+}
+
+
+class IModeManager {
+    {abstract} void InitModeManager()
+    {abstract} void UpdateModeManager()
+    {abstract} void SwitchModeManager()
+}
+
+class ModeConfig {
+    tMode: std::array<IMode*, 3>
+}
+
+class IMode {
+    {abstract} void Init()
+    {abstract} void Update()
+}
+
+ModeManager --|> IModeManager
+ModeManager --> ModeConfig
+ModeConfig --> IMode 
+
+----
+
+Пояснение к диагарамме UML:
+
+Для управления светодиодами в разных режимах была разработана система с использованием класса ModeManager. Она основана на интерфейсе IModeManager, который определяет базовые методы управления режимами, а также массиве указателей на объекты режимов (tMode), реализующих интерфейс IMode.
+
+Интерфейс IModeManager включает методы инициализации, обновления и переключения режимов, что обеспечивает гибкость и расширяемость системы. Класс ModeManager реализует эти методы, управляя переданным ему массивом режимов. Основные методы: InitModeManager, UpdateModeManager и SwitchModeManager.
+
+Ниже представлена реализация каждого класса на основе диагараммы UML:
+
+Код для реализации ModeManager (файл h):
+
+[source, cpp]
+----
+#ifndef MODEMANAGER_H
+#define MODEMANAGER_H
+
+#include "IModeManager.h"
+#include "ModeManagerConfig.h" // for tMode
+
+class ModeManager : public IModeManager
+{
+public:
+  ModeManager(tMode& modes); 
+  void InitModeManager() override; 
+  void UpdateModeManager() override; 
+  void SwitchModeManager() override; 
+private:
+  tMode& modes; 
+  std::uint8_t currentModeType; 
+};
+
+#endif
+----
+
+Код для реализации ModeManager (файл cpp):
+
+[source, cpp]
+----
+#include "ModeManager.h"
+
+ModeManager::ModeManager(tMode& modeArr) : modes(modeArr), currentModeType(0) 
+{
+}
+
+void ModeManager::InitModeManager() {
+    if (modes[currentModeType]) {
+        modes[currentModeType]->Init();
+    }
+}
+
+void ModeManager::UpdateModeManager() {
+    if (modes[currentModeType]) {
+        modes[currentModeType]->Update();
+    }
+}
+
+void ModeManager::SwitchModeManager() {
+    currentModeType = (currentModeType + 1) % 3; 
+    if (modes[currentModeType]) {
+        modes[currentModeType]->Init();
+    }
+}
+----
+
+Код для реализации IModeManager (файл h):
+
+[source, cpp]
+----
+#ifndef IMODEMANAGER_H
+#define IMODEMANAGER_H
+
+class IModeManager
+{
+public:
+  virtual void InitModeManager() = 0; 
+  virtual void UpdateModeManager() = 0; 
+  virtual void SwitchModeManager() = 0;
+};
+
+#endif
+----
+
+Код для реализации ModeConfig (файл h):
+
+[source, cpp]
+----
+#ifndef MODECONFIG_H
+#define MODECONFIG_H
+
+using tMode = std::array<IMode*, 2>;
+
+#endif
+----
+
+Теперь необходимо реализовать переключение режимов с использованием кнопки. Для этого создадим класс, отвечающий за работу с кнопкой.
+
+=== Класс Button
+
+Создадим классы IButton и Button.
+
+В классе IButton определен метод onClick(), который должен быть реализован в наследуемых классах. Этот метод используется для проверки состояния кнопки на нажатие:
+
+Код для реализации  IButton (файл h):
+
+[source, cpp]
+----
+#ifndef IBUTTON_H
+#define IBUTTON_H
+
+class IButton {
+public:
+    virtual bool onClick() = 0;
+};
+#endif
+----
+
+Класс Button, наследующий от IButton, реализует метод onClick(). Этот метод проверяет состояние кнопки в определённом порту и возвращает true, если кнопка нажата (0 в состоянии порта):
+
+Код для реализации  Button (файл h):
+
+[source, cpp]
+----
+#ifndef BUTTON_H
+#define BUTTON_H
+#include "IButton.h"
+
+template<typename Tport, int punNumber>
+class Button : public IButton {
+public:
+      bool onClick() override
+      {
+         return (Tport::IDR::Get() & (1 << punNumber)) == 0;
+      }
+      
+private:
+  bool currentStatus;
+  std::uint32_t buttonPortStatus;
+};
+#endif
+----
+
+=== Итог работы с классами
+
+Использование классов в C++ помогает организовать код, распределить обязанности между компонентами и облегчить его поддержку. Заголовочные файлы описывают интерфейсы классов, а файлы реализации содержат код методов. Класс ModeManager отвечает за управление режимами в системе, предоставляя функциональность для их инициализации, обновления и переключения. Конфигурация режимов реализована через массив указателей на объекты, что позволяет легко добавлять новые режимы и делает систему гибкой.
+
+Кроме того, был разработан класс Button, который обеспечивает взаимодействие пользователя с устройством. Он отслеживает состояние кнопки и инициирует соответствующие действия, что позволяет управлять функциями устройства посредством пользовательского ввода.
+
+== Модуль тактирования
+
+Модуль тактирования (Reset and Clock Control) RCC
+
+* Для формирования системной тактовой частоты SYSCLK могут использоваться 4 основных источника:​
+** HSI (high-speed internal) — внутренний высокочастотный RC-генератор.​
+** HSE (high-speed external) — внешний высокочастотный генератор.​
+** PLL — система ФАПЧ. Точнее сказать, это вовсе и не генератор, а набор из умножителей и делителей, исходный сигнал он получает от HSI или HSE, а на выходе у него уже другая частота.​
+
+=== HSI
+
+HSI (High-Speed Internal) — это встроенный осциллятор высокой частоты, который используется в микроконтроллерах, например, STM32F411RET6, для генерации стабильного тактового сигнала без необходимости внешних компонентов. Частота HSI обычно составляет 16, 24 или 32 МГц. Этот осциллятор идеально подходит для выполнения быстрых вычислений и обмена данными в системе. Он обеспечивает тактирование ядра процессора и других внутренних блоков микроконтроллера, являясь основным источником тактового сигнала для работы устройства.
+
+[source, cpp]
+----
+std::uint32_t SystemCoreClock = 16'000'000U;
+
+extern "C" 
+{
+  int __low_level_init(void)
+  {
+    RCC::CR::HSION::On::Set();
+    while (RCC::CR::HSIRDY::NotReady::IsSet())
+    {
+      
+    }
+    RCC::CFGR::SW::Hsi::Set();
+    while (!RCC::CFGR::SWS::Hsi::IsSet())
+    {
+    }
+    
+    RCC::APB2ENR::SYSCFGEN::Enable::Set ();
+    
+    // 0.Подключить системный таймер к частоте процессора в регистре CTRL
+    STK::CTRL::CLKSOURCE::CpuClock::Set();
+    return 1;
+    
+  }
+}
+----
+
+=== HSE
+
+HSE (High-Speed External) — это внешний кварцевый генератор высокой частоты, который используется в микроконтроллерах, таких как STM32F411RET6, для обеспечения высокой точности тактовой частоты. Обычно это кварцевый резонатор с частотой 8, 16 или 25 МГц. HSE предоставляет стабильную и точную частоту, необходимую для тактирования ядра процессора и других компонентов микроконтроллера, которые требуют высокой точности. Этот источник тактирования применяется, когда необходимо обеспечить максимальную стабильность частоты для таких задач, как обработка данных, коммуникации и управление периферийными устройствами.
+
+[source, cpp]
+----
+std::uint32_t SystemCoreClock = 8'000'000U;
+
+extern "C" 
+{
+  int __low_level_init(void)
+  {
+    RCC::CR::HSEON::On::Set();
+    while (RCC::CR::HSERDY::NotReady::IsSet())
+    {
+      
+    }
+    RCC::CFGR::SW::Hse::Set();
+    while (!RCC::CFGR::SWS::Hse::IsSet())
+    {
+    }
+    
+    RCC::APB2ENR::SYSCFGEN::Enable::Set ();
+    
+    // 0.Подключить системный таймер к частоте процессора в регистре CTRL
+    STK::CTRL::CLKSOURCE::CpuClock::Set();
+    return 1;
+    
+  }
+}
+----
+
+=== Фазовая подстройка частоты PLL
+
+PLL (Phase-Locked Loop) — это схема фазовой автоподстройки частоты, используемая в микроконтроллерах, таких как STM32F411RET6, для увеличения частоты внешнего или внутреннего источника (HSI или HSE) до необходимой системной частоты. PLL позволяет изменять частоту на выходе, умножая или деля входную частоту, что делает его идеальным для получения более высоких частот, когда исходной частоты HSI или HSE недостаточно для работы системы.
+
+PLL ​Внутренний источник PLL тактируется от внешнего или внутреннего высокочастотных генераторов (HSE либо HSI). ​
+
+С помощью регистров PLLM, PLLN,PLLP можно подобрать любую частоту до 100 Мгц включительно по формуле:​
+
+====
+ f = f(PLL clock input) × (PLLN / PLLM) /PLLP​
+====
+
+где: PLLM – делитель входной частоты; PLLN – множитель; PLLP – делитель на выходе PLL.
+
+Для получения частоты 
+====
+ f = 13.666МГц, например, выберем: PLLM = 8; PLLN = 137; PLLP = 8
+====
+
+ Проверка f = 137 × 8 / 8 / 8 = 13.666 МГц.
+
+[#Регистры PPL]
+.Регистры PPL
+image::Регистры PPL.png[]
+
+[source, cpp]
+----
+std::uint32_t SystemCoreClock = 8'000'000U;
+
+extern "C" 
+std::uint32_t SystemCoreClock = 13'666'000U;
+
+extern "C" 
+{
+  int __low_level_init(void)
+  {
+  RCC::PLLCFGR::PLLSRC::HseSource::Set();
+ 
+   //137
+  RCC::PLLCFGR::PLLN0::Set(0b10001001);
+  
+  //8
+  RCC::PLLCFGR::PLLP0::Set(0b11);
+
+  //8
+  RCC::PLLCFGR::PLLM0::Set(0b001000);
+  
+  RCC::CR::HSION::Off::Set();
+  
+  RCC::CR::PLLON::On::Set();
+  while (RCC::CR::PLLRDY::Unclocked::IsSet())
+  {
+  }
+  
+  RCC::CFGR::SW::Pll::Set();
+  while (!RCC::CFGR::SWS::Pll::IsSet()) 
+  {
+  }
+  
+  RCC::APB2ENR::SYSCFGEN::Enable::Set();
+  
+  return 1;
+  }
+}
+----
+
+== Заключение 
+
+В результате выполнения лабораторной работы был получен опыт в проектировании и реализации программного обеспечения с использованием объектно-ориентированных принципов, что позволило более эффективно организовать код и обеспечить его расширяемость. Также был получен практический опыт работы с системой тактирования STM32, включая настройку внутренних и внешних источников частоты, а также использование PLL для синхронизации работы системы. 
+
+
+
+
+
