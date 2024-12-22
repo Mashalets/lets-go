@@ -7,7 +7,7 @@
 :imagesdir: PIC
 :table-caption: Таблица
 
-include::Tityale.adoc[]
+include::Tityale3_4.adoc[]
 
 == Принцип Single Responsibility
 
