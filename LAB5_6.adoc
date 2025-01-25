@@ -66,7 +66,7 @@ ModeManager --> ModeConfig : use
 
 Ниже представлена реализация каждого класса на основе диагараммы UML:
 
-Код для реализации ModeManager (файл h):
+Код для oбъявления ModeManager (файл h):
 
 [source, cpp]
 ----
@@ -113,7 +113,7 @@ void ModeManager::SwitchModeManager() {
 }
 ----
 
-Код для реализации IModeManager (файл h):
+Код для oбъявления IModeManager (файл h):
 
 [source, cpp]
 ----
@@ -131,14 +131,14 @@ public:
 #endif
 ----
 
-Код для реализации ModeConfig (файл h):
+Код для oбъявления ModeConfig (файл h):
 
 [source, cpp]
 ----
 #ifndef MODECONFIG_H
 #define MODECONFIG_H
 
-using tMode = std::array<IMode*, 2>;
+using tMode = std::array<IMode*, 3>;
 
 #endif
 ----
@@ -151,7 +151,7 @@ using tMode = std::array<IMode*, 2>;
 
 В классе IButton объявлен метод isClick(), который должен быть реализован в наследуемых классах. Этот метод используется для проверки состояния кнопки на нажатие:
 
-Код для реализации  IButton (файл h):
+Код для oбъявления  IButton (файл h):
 
 [source, cpp]
 ----
@@ -160,12 +160,12 @@ using tMode = std::array<IMode*, 2>;
 
 class IButton {
 public:
-    virtual bool isClick() = 0;
+    virtual bool IsClick() = 0;
 };
 #endif
 ----
 
-Класс Button, наследующий от IButton, реализует метод isClick(). Этот метод проверяет состояние кнопки в определённом порту и возвращает true, если кнопка нажата (0 в состоянии порта):
+Класс Button, наследующий от IButton, реализует метод IsClick(). Этот метод проверяет состояние кнопки в определённом порту и возвращает true, если кнопка нажата (0 в состоянии порта):
 
 Код для реализации  Button (файл h):
 
@@ -178,7 +178,7 @@ public:
 template<typename Tport, int punNumber>
 class Button : public IButton {
 public:
-      bool isClick() override
+      bool IsClick() override
       {
          return (Tport::IDR::Get() & (1 << pinNumber)) == 0;
       }
@@ -222,8 +222,8 @@ extern "C"
     {
       
     }
-    RCC::CFGR::SW::Hse::Set();
-    while (!RCC::CFGR::SWS::Hse::IsSet())
+    RCC::CFGR::SW::Hsi::Set();
+    while (!RCC::CFGR::SWS::Hsi::IsSet())
     {
     }
     
@@ -254,8 +254,8 @@ extern "C"
     {
       
     }
-    RCC::CFGR::SW::Hsi::Set();
-    while (!RCC::CFGR::SWS::Hsi::IsSet())
+    RCC::CFGR::SW::Hse::Set();
+    while (!RCC::CFGR::SWS::Hse::IsSet())
     {
     }
     
