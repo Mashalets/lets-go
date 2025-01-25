@@ -66,7 +66,7 @@ ModeManager --> ModeConfig : use
 
 Ниже представлена реализация каждого класса на основе диагараммы UML:
 
-Код для реализации ModeManager (файл h):
+Код для объявление ModeManager (файл h):
 
 [source, cpp]
 ----
@@ -99,21 +99,24 @@ ModeManager::ModeManager(tMode& modeArr) : modes(modeArr), currentModeType(0)
 {
 }
 
-void ModeManager::InitModeManager() {
+void ModeManager::InitModeManager() 
+{
         modes[currentModeType]->Init();
 }
 
-void ModeManager::UpdateModeManager() {
+void ModeManager::UpdateModeManager() 
+{
         modes[currentModeType]->Update();
 }
 
-void ModeManager::SwitchModeManager() {
+void ModeManager::SwitchModeManager() 
+{
     currentModeType = (currentModeType + 1) % std::size(modes); 
         modes[currentModeType]->Init();
 }
 ----
 
-Код для реализации IModeManager (файл h):
+Код для объявление IModeManager (файл h):
 
 [source, cpp]
 ----
@@ -160,7 +163,7 @@ using tMode = std::array<IMode*, 2>;
 
 class IButton {
 public:
-    virtual bool isClick() = 0;
+    virtual bool IsClick() = 0;
 };
 #endif
 ----
@@ -178,7 +181,7 @@ public:
 template<typename Tport, int punNumber>
 class Button : public IButton {
 public:
-      bool isClick() override
+      bool IsClick() override
       {
          return (Tport::IDR::Get() & (1 << pinNumber)) == 0;
       }
